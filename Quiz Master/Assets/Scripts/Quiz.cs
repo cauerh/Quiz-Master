@@ -8,25 +8,64 @@ using System.Reflection;
 
 public class Quiz : MonoBehaviour
 {
-
+    [Header("Questions")]
     [SerializeField] TextMeshProUGUI questionText;
     [SerializeField] QuestionSO question;
+
+    [Header("Answers")]
     [SerializeField] GameObject[] answerButtons;
     int correctAnswerIndex;
+    bool hasAnsweredEarly;
+
+    [Header("Button Colors")]
     [SerializeField] Sprite defaultAnswerSprite;
     [SerializeField] Sprite correctAnswerSprite;
+
+    [Header("Timer")]
+    [SerializeField] Image timerImage;
+    Timer timer;
+
     Image buttonImage;
     void Start()
     {
+        
+        timer = FindObjectOfType<Timer>();
         GetNextQuestion();
         //DisplayQuestion();
 
     }
 
-   public void OnAnswerSelected(int index)
+    void Update()
     {
-        
+       
+        {
+            timerImage.fillAmount = timer.fillFraction;
+            if (timer.loadNextQuestion)
+            {
+                hasAnsweredEarly = false;
+                GetNextQuestion();
+                timer.loadNextQuestion = false;
+            }
+            else if(!hasAnsweredEarly && !timer.isAnsweringQuestion)
+            {
+                DisplayAnswer(-1);
+                SetButtonState(false);
+            }
+        }
+       
+       
+    }
 
+    public void OnAnswerSelected(int index)
+    {
+        hasAnsweredEarly = true;
+        DisplayAnswer(index);
+        SetButtonState(false);
+        timer.CancelTimer();
+    }
+
+    void DisplayAnswer(int index)
+    {
         if (index == question.GetCorrectAnswerIndex())
         {
 
@@ -36,14 +75,13 @@ public class Quiz : MonoBehaviour
         }
         else
         {
-           correctAnswerIndex = question.GetCorrectAnswerIndex();
+            correctAnswerIndex = question.GetCorrectAnswerIndex();
             string correctAnswer = question.GetAnswer(correctAnswerIndex);
             questionText.text = "Sorry, the correctanswer was:\n" + correctAnswer;
 
             buttonImage = answerButtons[correctAnswerIndex].GetComponent<Image>();
             buttonImage.sprite = correctAnswerSprite;
         }
-        SetButtonState(false);
     }
 
     void GetNextQuestion()
